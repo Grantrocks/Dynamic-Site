@@ -2,7 +2,6 @@ from flask import Flask,render_template,request
 import json
 import re
 pattern = '<[^<]+?>'
-import datetime
 import hashlib
 import os
 app=Flask('app')
