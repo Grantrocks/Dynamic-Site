@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="robots" content="noindex">
+    <title>Admin Page</title>
+    <link rel="stylesheet" href="static/editor.css">
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  </head>
+  <body>
+    <div id="editorarea">
+      <div class="sample-toolbar">
+    		<a href="javascript:void(0)" onclick="format('bold')"><span class="fa fa-bold fa-fw"></span></a>
+    		<a href="javascript:void(0)" onclick="format('italic')"><span class="fa fa-italic fa-fw"></span></a>
+        <a href="javascript:void(0)" onclick="format('underline')"><i class="fas fa-underline"></i></a>
+    		<a href="javascript:void(0)" onclick="format('insertunorderedlist')"><span class="fa fa-list fa-fw"></span></a>
+        <a href="javascript:void(0)" onclick="format('justifyLeft')"><i class="fas fa-align-left"></i></a>
+        <a href="javascript:void(0)" onclick="format('justifyCenter')"><i class="fas fa-align-center"></i></a>
+        <a href="javascript:void(0)" onclick="format('justifyRight')"><i class="fas fa-align-right"></i></a>
+        <span><select id="headerselect" onchange="changeheader()">
+          <option value="h1">H1</option>
+          <option value="h2">H2</option>
+          <option value="h3">H3</option>
+          <option value="h4">H4</option>
+          <option value="h5">H5</option>
+          <option value="h6">H6</option>
+        </select></span>
+        <span><select id="font" onchange="changefont(this)">
+          <option value="Arial">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="Trebuchet">Trebuchet</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Garamond">Garamond</option>
+          <option value="Courier New">Courier New</option>
+        </select></span>
+    		<a href="javascript:void(0)" onclick="setUrl()"><span class="fa fa-link fa-fw"></span></a>
+        <a href="javascript:void(0)" onclick="embed()"><i class="fas fa-sitemap"></i></a>
+         <a href="javascript:void(0)" onclick="insertImage()"><i class="fas fa-image"></i></a>
+        <span><input id="imageupload" accept="image/png, image/gif, image/jpeg, image/webp" type='file'></span>
+    </div>
+      <div class="editor" id="sampleeditor">
+    </div>
+    </div>
+    <div id="main-content">
+    
+    </div>
+    <div id="make-new-category">
+      <input id="category-name" type="text">
+      <button id="submit-cat" onclick="addcategory()">Add Category</button>
+      <div id="add-result"></div>
+    </div>
+    <script>
+            var username=prompt("Username: ");
+      document.getElementById("editorarea").style.display="none";
+      document.getElementById("make-new-category").style.display="none";
+      var password=prompt("Password: ");
+      let xhr = new XMLHttpRequest();
+      xhr.open('GET', '/admin/login');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader("username", username);
+      xhr.setRequestHeader('password', password);
+      if(username && password){
+        xhr.send()
+      }else{
+        document.getElementById("main-content").innerHTML='Please refresh and try again.';
+      }
+      xhr.onload = function() {
+        json=JSON.parse(xhr.response);
+        if(json.success){
+          document.getElementById("main-content").innerHTML=json.admin_page;
+          localStorage.username=username;
+          localStorage.password=password;
+          document.getElementById("neweditorarea").appendChild(document.getElementById('editorarea'))
+          document.getElementById("editorarea").style.display="block";
+          document.getElementById("make-new-category").style.display="block";
+          document.getElementById("category").innerHTML="";
+          for(a of json.categories){
+            document.getElementById("category").innerHTML+=`<option value="${a}">${capitalizeFirstLetter(a)}</option>`
+          }
+        }else{
+          document.getElementById("body").innerHTML=json.reason;
+        }
+      };
+      function publish_article(){
+        var article=document.getElementById("sampleeditor").innerHTML;
+        var article_name=document.getElementById("article-name").value;
+        var category=document.getElementById("category").value;
+        if(article&&article_name){
+          var body={"author":document.getElementById("author").value,"article":article,"article_name":article_name,"category":category,"date":document.getElementById("date").value}
+          let xhr = new XMLHttpRequest();
+          xhr.open("POST", "/admin/articles/postarticle")
+          xhr.send([JSON.stringify(body)])
+          xhr.onload=function(){
+            var data=JSON.parse(xhr.response)
+            if(data){
+              document.getElementById("publish-result").innerHTML=data.result;
+            }else{
+              document.getElementById("publish-result").innerHTML=data.result;
+            }
+          }
+        }else{
+          alert("Something was left blank...")
+        }
+      }
+      window.addEventListener('load', function(){
+			document.getElementById('sampleeditor').setAttribute('contenteditable', 'true');
+			document.getElementById('sampleeditor2').setAttribute('contenteditable', 'true');
+        });
+    
+		function format(command, value) {
+			document.execCommand(command, false, value);
+		}
+		function setUrl() {
+			var url = prompt("URL:");
+			var sText = document.getSelection();
+			document.execCommand('insertHTML', false, '<a href="' + url + '" target="_blank">' + sText + '</a>');
+			document.getElementById('txtFormatUrl').value = '';
+		}        
+    function insertImage(){
+      var element=document.getElementById("imageupload");
+      let file = element.files[0];
+        let reader = new FileReader();
+        reader.onloadend = function() {
+          format("insertImage",reader.result)
+        }
+        reader.readAsDataURL(file);
+    }
+    function getSelectionText() {
+        var text = "";
+        if (window.getSelection) {
+            text = window.getSelection().toString();
+        } else if (document.selection && document.selection.type != "Control") {
+            text = document.selection.createRange().text;
+        }
+        return text;
+    }
+      function replaceSelectedText(replacementText) {
+          var sel, range;
+          if (window.getSelection) {
+              sel = window.getSelection();
+              if (sel.rangeCount) {
+                  range = sel.getRangeAt(0);
+                  range.deleteContents();
+                  range.insertNode(document.createTextNode(replacementText));
+              }
+          } else if (document.selection && document.selection.createRange) {
+              range = document.selection.createRange();
+              range.text = replacementText;
+          }
+      }
+      function changeheader(){
+        var element=document.getElementById("headerselect");
+        text=getSelectionText()
+        var tag=`<${element.value}>${text}</${element.value}>`
+        format("insertHTML",tag)
+      }
+      function changefont(element){
+        var font=element.value;
+        format("fontName",font)
+      }
+      function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+      function addcategory(){
+        var element=document.getElementById("category-name")
+        var category=element.value;
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", `/admin/categories/new?cat=${category}&username=${localStorage.username}&password=${localStorage.password}`)
+        xhr.send()
+        xhr.onload=function(){
+          data=JSON.parse(xhr.response)
+          if(data.success){
+            document.getElementById("add-result").innerHTML=data.result;
+            if(data.action=="refresh"){
+              document.getElementById("category").innerHTML="";
+              for(a of data.data.categories){
+                document.getElementById("category").innerHTML+=`<option value="${a}">${capitalizeFirstLetter(a)}</option>`
+              }
+            }
+          }
+        }
+      }
+      function embed(){
+        var URL=prompt("URL:")
+        var html=`<iframe src="${URL}" widht="80%" height="auto"></iframe>`
+        format("insertHTML",html)
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+<script>
+  function publish_article(){
+    alert("Published");
+  }
+</script>

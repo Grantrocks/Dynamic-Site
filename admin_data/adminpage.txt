@@ -1,0 +1,20 @@
+<h1>Admin Page</h1>
+<p>Manage articles here.</p>
+
+<div id="write-article">
+<p>Write your article out below. This site does not save the editors progress so please make sure to save your work before refreshing or leaving the website.</p>
+<input id="article-name" type="text" placeholder="Article Name">
+<br>
+<input id="author" type="text" placeholder="Author">
+<br>
+<input id="date" type="date" placeholder="Date">
+<br>
+<select id="category">
+  <option value="any">Any</option>
+</select>
+<br>
+<div id="neweditorarea"></div>
+<button onclick="publish_article()">Publish</button>
+<br>
+<h3 id="publish-result"></h3>
+</div>

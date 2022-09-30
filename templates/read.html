@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <link href="/static/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+  </head>
+  <body>
+    <nav id="navbar" class="navbar navbar-expand-lg bg-light">
+      
+    </nav>
+    <div class="container">
+    <center>
+    <h1 id="name">Article Loading...</h1>
+    <h3 id="author"></h3>
+    <h5 id="date"></h5>
+    </center>
+    <div id="article">
+      
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
+    <script>
+      setTimeout(function(){
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/features/navbar');
+        xhr.send();
+        xhr.onload=function() {
+          document.getElementById("navbar").innerHTML=xhr.response;
+        }
+      },100)
+      setTimeout(function(){
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/categories/get');
+        xhr.send();
+        xhr.onload=function() {
+          document.getElementById("navbar-categories").innerHTML="";
+          var data=JSON.parse(xhr.response);
+          for(a of data.categories){
+            var name=capitalizeFirstLetter(a)
+            document.getElementById("navbar-categories").innerHTML+=`<li><a class="dropdown-item" href="/categories?category=${a}">${name}</a></li>`;
+          }
+        }
+        document.getElementById("search").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById("searchBTN").click();
+        }
+        });
+        loadcontent()
+      },1000)
+      function search(){
+        location.href=`/search?query=${document.getElementById("search").value}`;
+      }
+      function loadcontent(){
+        const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const articlename = urlParams.get('name')
+const category = urlParams.get('category')
+let xhr = new XMLHttpRequest();
+xhr.open('GET', `/articles/read/get-article?name=${articlename}&category=${category}`);
+xhr.send();
+xhr.onload = function() {
+  var data=JSON.parse(xhr.response)
+  if(data.success){
+    data=data.article
+    document.getElementById("article").innerHTML=data.article;
+    document.getElementById("name").innerHTML=data.article_name;
+    document.getElementById("author").innerHTML=data.author;
+    document.getElementById("date").innerHTML=data.date;
+    document.title=`${data.article_name} - Dynamic Showcase`
+  }
+      }
+      }
+    </script>
+  </body>
+</html>

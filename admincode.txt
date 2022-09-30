@@ -1,0 +1,130 @@
+      var username=prompt("Username: ");
+      document.getElementById("editorarea").style.display="none";
+      document.getElementById("make-new-category").style.display="none";
+      var password=prompt("Password: ");
+      let xhr = new XMLHttpRequest();
+      xhr.open('GET', '/admin/login');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader("username", username);
+      xhr.setRequestHeader('password', password);
+      if(username && password){
+        xhr.send()
+      }else{
+        document.getElementById("main-content").innerHTML='Please refresh and try again.';
+      }
+      xhr.onload = function() {
+        json=JSON.parse(xhr.response);
+        if(json.success){
+          document.getElementById("main-content").innerHTML=json.admin_page;
+          localStorage.username=username;
+          localStorage.password=password;
+          document.getElementById("neweditorarea").appendChild(document.getElementById('editorarea'))
+          document.getElementById("editorarea").style.display="block";
+          document.getElementById("make-new-category").style.display="block";
+          document.getElementById("category").innerHTML="";
+          for(a of json.categories){
+            document.getElementById("category").innerHTML+=`<option value="${a}">${capitalizeFirstLetter(a)}</option>`
+          }
+        }else{
+          document.getElementById("body").innerHTML=json.reason;
+        }
+      };
+      function publish_article(){
+        var article=document.getElementById("sampleeditor").innerHTML;
+        var article_name=document.getElementById("article-name").value;
+        var category=document.getElementById("category").value;
+        if(article&&article_name){
+          var body={"author":document.getElementById("author").value,"article":article,"article_name":article_name,"category":category,"date":document.getElementById("date").value}
+          let xhr = new XMLHttpRequest();
+          xhr.open("POST", "/admin/articles/postarticle")
+          xhr.send([JSON.stringify(body)])
+          xhr.onload=function(){
+            var data=JSON.parse(xhr.response)
+            if(data){
+              document.getElementById("publish-result").innerHTML=data.result;
+            }else{
+              document.getElementById("publish-result").innerHTML=data.result;
+            }
+          }
+        }else{
+          alert("Something was left blank...")
+        }
+      }
+      window.addEventListener('load', function(){
+			document.getElementById('sampleeditor').setAttribute('contenteditable', 'true');
+			document.getElementById('sampleeditor2').setAttribute('contenteditable', 'true');
+        });
+    
+		function format(command, value) {
+			document.execCommand(command, false, value);
+		}
+		function setUrl() {
+			var url = prompt("URL:");
+			var sText = document.getSelection();
+			document.execCommand('insertHTML', false, '<a href="' + url + '" target="_blank">' + sText + '</a>');
+			document.getElementById('txtFormatUrl').value = '';
+		}        
+    function insertImage(){
+      var element=document.getElementById("imageupload");
+      let file = element.files[0];
+        let reader = new FileReader();
+        reader.onloadend = function() {
+          format("insertImage",reader.result)
+        }
+        reader.readAsDataURL(file);
+    }
+    function getSelectionText() {
+        var text = "";
+        if (window.getSelection) {
+            text = window.getSelection().toString();
+        } else if (document.selection && document.selection.type != "Control") {
+            text = document.selection.createRange().text;
+        }
+        return text;
+    }
+      function replaceSelectedText(replacementText) {
+          var sel, range;
+          if (window.getSelection) {
+              sel = window.getSelection();
+              if (sel.rangeCount) {
+                  range = sel.getRangeAt(0);
+                  range.deleteContents();
+                  range.insertNode(document.createTextNode(replacementText));
+              }
+          } else if (document.selection && document.selection.createRange) {
+              range = document.selection.createRange();
+              range.text = replacementText;
+          }
+      }
+      function changeheader(){
+        var element=document.getElementById("headerselect");
+        text=getSelectionText()
+        var tag=`<${element.value}>${text}</${element.value}>`
+        format("insertHTML",tag)
+      }
+      function changefont(element){
+        var font=element.value;
+        format("fontName",font)
+      }
+      function capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+      function addcategory(){
+        var element=document.getElementById("category-name")
+        var category=element.value;
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", `/admin/categories/new?cat=${category}&username=${localStorage.username}&password=${localStorage.password}`)
+        xhr.send()
+        xhr.onload=function(){
+          data=JSON.parse(xhr.response)
+          if(data.success){
+            document.getElementById("add-result").innerHTML=data.result;
+            if(data.action=="refresh"){
+              document.getElementById("category").innerHTML="";
+              for(a of data.data.categories){
+                document.getElementById("category").innerHTML+=`<option value="${a}">${capitalizeFirstLetter(a)}</option>`
+              }
+            }
+          }
+        }
+      }

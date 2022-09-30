@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <link href="/static/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+  </head>
+  <body>
+    <nav id="navbar" class="navbar navbar-expand-lg bg-light">
+      
+    </nav>
+    <div class="container">
+      <h2 id="results-for"></h2>
+      <div id="search-result">
+        
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
+    <script>
+      setTimeout(function(){
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/features/navbar');
+        xhr.send();
+        xhr.onload=function() {
+          document.getElementById("navbar").innerHTML=xhr.response;
+        }
+      },100)
+      setTimeout(function(){
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        let xhr = new XMLHttpRequest();
+        document.title=`${urlParams.get('query')} - Search`
+        document.getElementById("results-for").innerHTML=`Results For: ${urlParams.get('query')}`
+        xhr.open('GET', `/searchdatabase?query=${urlParams.get('query')}`);
+        xhr.send();
+        xhr.onload=function() {
+          data=JSON.parse(xhr.response)
+          if(data.results.length>0){
+            for(a of data.results){
+              var link=`<h3><a href="/articles/read?name=${a.name}&category=${a.category}">${a.name}</a></h3>`
+              document.getElementById("search-result").innerHTML+=`<div>${link}</div>`;
+            } 
+          }else{
+            document.getElementById("search-result").innerHTML="No results. Sorry"
+          }
+        }
+      },100);
+      setTimeout(function(){
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/categories/get');
+        xhr.send();
+        xhr.onload=function() {
+          document.getElementById("navbar-categories").innerHTML="";
+          var data=JSON.parse(xhr.response);
+          for(a of data.categories){
+            var name=capitalizeFirstLetter(a)
+            document.getElementById("navbar-categories").innerHTML+=`<li><a class="dropdown-item" href="/categories?category=${a}">${name}</a></li>`;
+          }
+        }
+        document.getElementById("search").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById("searchBTN").click();
+        }
+      });
+      },1000)
+      function search(){
+        location.href=`/search?query=${document.getElementById("search").value}`;
+      }
+    </script>
+  </body>
+</html>
